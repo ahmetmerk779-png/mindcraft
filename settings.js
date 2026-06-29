@@ -1,4 +1,4 @@
-mçmodule.exports = {
+module.exports = {
   minecraft_version: "1.8.9",
   host: "aesirmc.com",
   port: 25565,
@@ -25,7 +25,7 @@ mçmodule.exports = {
 
         // using more than 1 profile requires you to /msg each bot indivually
         // individual profiles override values from the base profile
-    ],
+    
 
     "load_memory": false, // load memory from previous session
     "init_message": "Respond with hello world and your name", // sends to all on spawn
