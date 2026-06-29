@@ -27,8 +27,7 @@ index 70db312..93d2054 100644
 +      const pitchDeg = -bot.entity.pitch * 180 / Math.PI // invert
        bot._client.write('use_item', {
          hand: offHand ? 1 : 0,
-         sequence,
--        rotation: { x: 0, y: 0 }
+         sequence
 +        rotation: {
 +          x: yawDeg,
 +          y: pitchDeg
