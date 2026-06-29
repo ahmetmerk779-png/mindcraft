@@ -7,7 +7,11 @@ export class Mistral {
     #client;
 
     constructor(model_name, url, params) {
-        this.model_name = model_name;
+        this.model_name = mistral-large-latest
+            
+            
+                           
+        
         this.params = params;
 
         if (typeof url === "string") {
