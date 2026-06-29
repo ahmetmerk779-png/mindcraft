@@ -1,6 +1,8 @@
 {
-    "name": "andy",
-
-    "model": "gpt-5.4-mini"
-
+  "name": "andy",
+  "model": "mistral-small-latest",
+  "provider": "mistral",
+  "system": "You are a helpful Minecraft AI assistant. You can move, mine, build, and chat.",
+  "temperature": 0.7,
+  "max_tokens": 500
 }
