@@ -1,16 +1,16 @@
-const settings = {
-    "minecraft_version": "auto", // or specific version like "1.21.6"
-    "host": "", // or "localhost", "your.ip.address.here"
-    "port": -1, // set to -1 to automatically scan for open ports
-    "auth": "offline", // or "microsoft"
-
-    // the mindserver manages all agents and hosts the UI
-    "mindserver_port": 8080,
-    "auto_open_ui": true, // opens UI in browser on startup
-    
-    "base_profile": "assistant", // survival, assistant, creative, or god_mode
-    "profiles": [
-        "./mistral.json",
+mçmodule.exports = {
+  minecraft_version: "1.8.9",
+  host: "aesirmc.com",
+  port: 25565,
+  auth: "offline",
+  username: "BenimBotAdim",
+  
+  mindserver_host: "0.0.0.0",
+  mindserver_port: 8080,
+  auto_open_ui: false,
+  
+  base_profile: "andy",
+  profiles: ["./andy.json"]
 
         // "./profiles/gpt.json",
         // "./profiles/claude.json",
