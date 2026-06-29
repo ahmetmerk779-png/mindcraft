@@ -12,7 +12,6 @@ index 496cf63..813a667 100644
      return block.digTime(
        type,
        creative,
--      bot.entity.isInWater,
 +      false, // isInWater, water calc is bugged, so always false
        !bot.entity.onGround,
        enchantments,
