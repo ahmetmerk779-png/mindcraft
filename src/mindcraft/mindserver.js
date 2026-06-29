@@ -282,7 +282,36 @@ export function createMindServer(host_public = false, port = 8080) {
     const host = 'localhost';
     server.listen(port, host, () => {
         console.log(`MindServer running on port ${port} on host ${host}`);
-    });
+    });// ========== WEB ARAYÜZÜNDEN AYAR DEĞİŞTİRME ==========
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Mevcut ayarları getir
+app.get('/api/config', (req, res) => {
+  try {
+    const settings = require('../../settings.js');
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Yeni ayarları kaydet
+app.post('/api/config', (req, res) => {
+  try {
+    const newSettings = req.body;
+    const settingsPath = path.join(__dirname, '../../settings.js');
+    const content = `module.exports = ${JSON.stringify(newSettings, null, 2)};`;
+    fs.writeFileSync(settingsPath, content, 'utf8');
+    res.json({ success: true, message: 'Ayarlar kaydedildi!' });
+    setTimeout(() => process.exit(0), 1000);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
     return server;
 }
