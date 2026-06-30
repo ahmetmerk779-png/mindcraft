@@ -1,32 +1,14 @@
-// src/mindcraft/mindserver.js
 import express from 'express';
-import http from 'http';
-import { Server as SocketIO } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as fs from 'fs'; // Düzeltilmiş import
+import fs from 'fs';
+import { createServer as createViteServer } from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = http.createServer(app);
-const io = new SocketIO(server);
-
-const PORT = process.env.PORT || 8080;
-const HOST = process.env.HOST || '0.0.0.0';
-
-// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../../public')));
-
-// ============================================================
-//  ANA SAYFA
-// ============================================================
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/index.html'));
-});
 
 // ============================================================
 //  API: Bot Ayarlarını Yönet (Web'den Güncelleme)
@@ -35,24 +17,11 @@ app.get('/', (req, res) => {
 // Mevcut ayarları oku (GET)
 app.get('/api/config', (req, res) => {
   try {
-    // settings.js dosyasını oku (require ile)
-    const settingsPath = path.join(__dirname, '../../settings.js');
-    if (!fs.existsSync(settingsPath)) {
-      return res.status(404).json({ error: 'settings.js dosyası bulunamadı.' });
-    }
-    // settings.js bir ES Module olduğu için import() ile dinamik olarak yükle
-    import(`file://${settingsPath}`)
-      .then(module => {
-        const settings = module.default || module;
-        res.json(settings);
-      })
-      .catch(err => {
-        console.error('Ayarlar okunamadı:', err.message);
-        res.status(500).json({ error: 'Ayarlar okunamadı: ' + err.message });
-      });
+    const settings = require('../../settings.js');
+    res.json(settings);
   } catch (error) {
     console.error('Ayarlar okunamadı:', error.message);
-    res.status(500).json({ error: 'Ayarlar okunamadı: ' + error.message });
+    res.status(500).json({ error: 'Ayarlar okunamadı' });
   }
 });
 
@@ -60,33 +29,21 @@ app.get('/api/config', (req, res) => {
 app.post('/api/config', (req, res) => {
   try {
     const newSettings = req.body;
-
-    // Gelen veriyi doğrula
     if (!newSettings.host || !newSettings.port) {
       return res.status(400).json({ error: 'Host ve port zorunludur.' });
     }
-
-    // settings.js dosyasının yolu
     const settingsPath = path.join(__dirname, '../../settings.js');
-
-    // Yeni ayarları settings.js'e yaz
-    const fileContent = `export default ${JSON.stringify(newSettings, null, 2)};`;
+    const fileContent = `module.exports = ${JSON.stringify(newSettings, null, 2)};`;
     fs.writeFileSync(settingsPath, fileContent, 'utf8');
-
     console.log('✅ Ayarlar kaydedildi:', newSettings);
-
-    // Başarılı yanıt
     res.json({
       success: true,
       message: 'Ayarlar kaydedildi. Bot yeniden başlatılıyor...'
     });
-
-    // Botu yeniden başlat (Render'da otomatik yeniden başlatılır)
     setTimeout(() => {
       console.log('🔄 Bot yeniden başlatılıyor...');
       process.exit(0);
     }, 1500);
-
   } catch (error) {
     console.error('Ayarlar kaydedilemedi:', error.message);
     res.status(500).json({ error: 'Ayarlar kaydedilemedi: ' + error.message });
@@ -94,28 +51,54 @@ app.post('/api/config', (req, res) => {
 });
 
 // ============================================================
-//  SOCKET.IO
+//  MindServer Ana Mantığı
 // ============================================================
-io.on('connection', (socket) => {
-  console.log('✅ Yeni bir istemci bağlandı:', socket.id);
 
-  socket.on('disconnect', () => {
-    console.log('❌ İstemci ayrıldı:', socket.id);
-  });
+let agents = {};
 
-  // İstemciden gelen mesajları işle
-  socket.on('message', (data) => {
-    console.log('📩 Mesaj alındı:', data);
-    // Tüm istemcilere yay
-    io.emit('message', data);
+export function logoutAgent(agentName) {
+  if (agents[agentName]) {
+    delete agents[agentName];
+    console.log(`Agent ${agentName} çıkış yaptı.`);
+    return true;
+  }
+  return false;
+}
+
+export function getAgents() {
+  return agents;
+}
+
+export function addAgent(agentName, agentData) {
+  agents[agentName] = agentData;
+}
+
+// Vite ile geliştirme sunucusu (opsiyonel)
+async function startVite() {
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'custom'
   });
+  app.use(vite.middlewares);
+}
+
+// Statik dosyalar
+app.use(express.static(path.join(__dirname, '../../public')));
+
+// Ana sayfa
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
 
-// ============================================================
-//  SUNUCUYU BAŞLAT
-// ============================================================
-server.listen(PORT, HOST, () => {
-  console.log(`🌐 MindServer http://${HOST}:${PORT} adresinde çalışıyor.`);
+// Sunucuyu başlat
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`MindServer running on port ${PORT} on host 0.0.0.0`);
 });
 
-export default { app, server, io };
+// Eğer geliştirme ortamındaysa Vite'ı başlat
+if (process.env.NODE_ENV === 'development') {
+  startVite();
+}
+
+export default app;
